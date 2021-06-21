@@ -1,0 +1,207 @@
+<html>
+<head>
+    <title>MockManager</title>
+</head>
+<body>
+<div>
+    <div style="width: 53%;height: 95%;float:left">
+        <div>
+            <span>clzName:</span>&nbsp;<input type="text" id="clzName" style="width:300px"/>
+            <input type="button" value="query" id="query"/>
+            <input type="checkbox" id="includeBean" checked="checked">
+            <label for="includeBean">show mock bean info</label>
+            <input type="checkbox" id="includeProxy">
+            <label for="includeProxy">show mock proxy info</label>
+        </div>
+        <span style="float:left">context:</span><input style="float:right" type="button" value="update" id="update"/>
+        <br/>
+        <textarea id="context" style="width: 100%;height: 100%;"></textarea>
+        <br/>
+    </div>
+    <div style="width:45%;height:95%;float:right">
+        <div>
+            <span>dynamic invoker:</span><br/>
+            <input type="text" id="mockBeanId" placeholder="mockBeanId">
+            <input type="text" id="methodName" placeholder="methodName">
+            <input type="text" id="invokerName" placeholder="invokerName">
+            <br/>
+            <input id="decode" type="button" value="decode"/>
+            <input id="removeInovker" type="button" value="removeInovker">
+            <input type="button" value="saveLocal" id="saveLocal">
+            <input type="button" value="saveLocalAndEnabled" id="saveLocalAndEnabled">
+        </div>
+        <div>
+            <span>Encode Code:</span>
+            <textarea id="encodeCode" style="width:100%;height:10%"></textarea>
+        </div>
+        <div>
+            <span>import part:</span>
+            <textarea id="importPart" style="width:100%;height:25%"></textarea>
+        </div>
+        <div>
+            <span>code part:</span><br/>
+            <label style="position:absolute;font-size:small;width:100%">@Override<br/>
+                public Object invoke(
+                SimpleInvoker oldMethod,
+                SimpleInvoker newMethod,
+                Object[] args) {
+            </label>
+            <textarea id="codePart" style="width:100%;height:55%;padding-top:40px;"></textarea>
+        </div>
+    </div>
+</div>
+
+</body>
+<script type="text/javascript">
+        var co="";
+        document.getElementById('query').onclick=function(){
+            var xhr=new XMLHttpRequest();
+            var clzName=document.getElementById("clzName").value;
+            var includeBean=document.getElementById('includeBean').checked;
+            var includeProxy=document.getElementById('includeProxy').checked;
+            xhr.open("post","/mzh/em/manager/query?oldBeanName="+encodeURIComponent(clzName)+"&includeBean="+includeBean+"&includeProxy="+includeProxy);
+            xhr.onload=function(){
+                if(xhr.status==200){
+                    co=JSON.parse(xhr.responseText);
+                    refreshContext();
+                }else{
+                    alert(xhr.status+"-"+xhr.statusText);
+                }
+            }
+                xhr.send();
+        }
+        document.getElementById('update').onclick=function(){
+            var xhr=new XMLHttpRequest();
+            var clzName=document.getElementById("context").value;
+            xhr.open("post","/mzh/em/manager/update");
+            xhr.setRequestHeader('Content-Type','application/json');
+            xhr.onload=function(){
+                if(xhr.status==200){
+                   alert(xhr.responseText);
+                   document.getElementById('query').click();
+                }else{
+                    alert(xhr.status+"-"+xhr.statusText);
+                }
+            }
+            xhr.send(document.getElementById("context").value);
+        }
+
+
+        //本次操作类别
+
+        function findMatchedBean(){
+            var beanId=document.getElementById('mockBeanId').value;
+            for(var i=0;i<co.length;i++){
+            if(co[i].emInfo==undefined || co[i].emInfo==null || co[i].emInfo.beanInfo==undefined || co[i].emInfo.beanInfo==null){continue;}
+            var targetClzs=Object.keys(co[i].emInfo.beanInfo);
+            for(var j=0;j<targetClzs.length;j++){
+                    var beans=co[i].emInfo.beanInfo[targetClzs[j]];
+                    for(var f=0;f<beans.length;f++){
+                    if(beans[f].id==beanId){
+                        return beans[f];
+                    }
+                }
+            }
+           }
+           return null;
+        }
+        function findMatchedMethodInfo(){
+            var bean=findMatchedBean();
+            if(bean==null || bean==undefined){
+                return null;
+            }
+            var methodName=document.getElementById('methodName').value;
+            for(var k=0;k<bean.methodInfo.length;k++){
+                if(bean.methodInfo[k].methodName==methodName){
+                    return bean.methodInfo[k];
+                }
+            }
+            return null;
+        }
+        function findMatchedInvokerList(){
+            var methodInfo=findMatchedMethodInfo();
+            if(methodInfo==null || methodInfo==undefined){
+                return null;
+            }
+            return methodInfo.dynamicInvokes;
+
+        }
+        function findMatchedInvoker(){
+            var invokerName=document.getElementById('invokerName').value;
+            var invokerList=findMatchedInvokerList();
+            if(invokerList==null || invokerList==undefined){
+                return null;
+            }
+            var invokerNames=Object.keys(invokerList);
+            for(var x=0;x<invokerNames.length;x++){
+                if(invokerNames[x]==invokerName){
+                    return invokerList[invokerName];
+                }
+            }
+            return null;
+        }
+
+
+        document.getElementById('decode').onclick=function(){
+            var invoker=findMatchedInvoker();
+            if(invoker==null){
+                alert('no matched invoker');
+                return;
+            }
+            var code=invoker.srcCode;
+            var importPart=code.split('_')[0];
+            var codePart=code.split('_')[1];
+            document.getElementById('encodeCode').value=code;
+            document.getElementById('importPart').value=atob(importPart);
+            document.getElementById('codePart').value=atob(codePart);
+        }
+        document.getElementById("removeInovker").onclick=function(){
+            var invoker=findMatchedInvoker();
+            if(invoker==null){
+                alert('no matched invoker');
+                return;
+            }
+            var invokerList=findMatchedInvokerList();
+            var invokerName=document.getElementById('invokerName').value;
+            delete invokerList[invokerName];
+            refreshContext();
+        }
+
+        document.getElementById("saveLocal").onclick=function(){
+            var invokerName=document.getElementById('invokerName').value;
+            if(invokerName==null || invokerName=="" || invokerName==undefined){
+                alert("name can not be null");
+                return;
+            }
+            var invokerList=findMatchedInvokerList();
+            if(invokerList==null){
+                alert("no matched invoker");
+               return;
+            }
+            var importPart=btoa(document.getElementById('importPart').value);
+            var codePart=btoa(document.getElementById('codePart').value);
+            var encCode=importPart+"_"+codePart;
+            document.getElementById('encodeCode').value=encCode;;
+            invokerList[invokerName]={"srcCode":encCode};
+            refreshContext();
+        }
+        document.getElementById("saveLocalAndEnabled").onclick=function(){
+            var invokerName=document.getElementById('invokerName').value;
+            if(invokerName==null || invokerName=="" || invokerName==undefined){
+                alert("name can not be null");
+                return;
+            }
+            document.getElementById("saveLocal").onclick();
+            var methodInfo=findMatchedMethodInfo();
+            methodInfo.dynamicInvokeName=invokerName;
+            refreshContext();
+        }
+
+        function refreshContext(){
+            document.getElementById('context').value=JSON.stringify(co,null,'   ');
+        }
+
+
+</script>
+</html>
+</div>

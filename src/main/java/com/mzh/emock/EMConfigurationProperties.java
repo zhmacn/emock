@@ -1,11 +1,9 @@
 package com.mzh.emock;
 
-import com.mzh.emock.log.Logger;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
-import org.springframework.core.type.ClassMetadata;
 import org.springframework.core.type.MethodMetadata;
 import org.springframework.lang.NonNull;
 
@@ -26,21 +24,18 @@ public class EMConfigurationProperties {
     public static long WAIT_FOR_APPLICATION_READY=5*60*1000L;
     public static String ENABLED_PROCESSOR="com.mzh.emock.processor.EMApplicationReadyProcessor";
     public static final  List<String> ENABLED_PROFILES= Collections.synchronizedList(new ArrayList<String>(){{add("test");add("dev");}});
-    public static final List<String> SCAN_PATH=Collections.synchronizedList(new ArrayList<>());
+    public static final List<String> SCAN_PACKAGE=Collections.synchronizedList(new ArrayList<>());
     public static boolean MOCK_BEAN_ON_INIT=true;
     public static boolean MOCK_METHOD_ON_INIT=true;
-
-    private final Logger logger=Logger.get(EMConfigurationProperties.class);
-
 
     public void setEnabledProfiles(@NonNull List<String> profiles){
         ENABLED_PROFILES.clear();
         ENABLED_PROFILES.addAll(profiles);
     }
 
-    public void setScanPath(@NonNull List<String> paths){
-        SCAN_PATH.clear();
-        SCAN_PATH.addAll(paths);
+    public void setScanPackage(@NonNull List<String> packages){
+        SCAN_PACKAGE.clear();
+        SCAN_PACKAGE.addAll(packages);
     }
 
     public void setWaitTime(long waitTime){

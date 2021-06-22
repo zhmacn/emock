@@ -1,6 +1,7 @@
 package com.mzh.emock.util;
 
 import com.mzh.emock.core.EMCache;
+import com.mzh.emock.core.EMHandler;
 import com.mzh.emock.type.EMRelatedObject;
 import com.mzh.emock.type.proxy.EMProxyHolder;
 import org.springframework.cglib.proxy.Enhancer;
@@ -28,14 +29,14 @@ public class EMProxyTool {
         if (oldBean instanceof Proxy) {
             InvocationHandler oldHandler = Proxy.getInvocationHandler(oldBean);
             return Proxy.newProxyInstance(loader, interfaces,
-                    createEnhance(oldHandler, new EMCache.EProxyHandlerEnhanceInterceptor(oldHandler, oldBean, interfaces[0]), loader));
+                    createEnhance(oldHandler, new EMHandler.EProxyHandlerEnhanceInterceptor(oldHandler, oldBean, interfaces[0]), loader));
         }
-        return Proxy.newProxyInstance(loader, interfaces, new EMCache.EInterfaceProxyInvocationHandler(oldBean, interfaces[0]));
+        return Proxy.newProxyInstance(loader, interfaces, new EMHandler.EInterfaceProxyInvocationHandler(oldBean, interfaces[0]));
     }
 
 
     private static Object createClassProxy(Object oldBean, ClassLoader loader, Class<?> injectClz) {
-        return createEnhance(oldBean, new EMCache.EObjectEnhanceInterceptor(oldBean, injectClz), loader);
+        return createEnhance(oldBean, new EMHandler.EObjectEnhanceInterceptor(oldBean, injectClz), loader);
     }
 
     private static EMProxyHolder findCreatedProxy(Class<?> targetClz, Object oldBean) {

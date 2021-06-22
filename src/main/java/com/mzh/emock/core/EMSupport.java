@@ -8,14 +8,12 @@ import com.mzh.emock.type.bean.EMBeanInfo;
 import com.mzh.emock.type.bean.definition.EMBeanDefinitionSource;
 import com.mzh.emock.type.bean.definition.EMBeanDefinition;
 import com.mzh.emock.type.proxy.EMProxyHolder;
-import com.mzh.emock.util.EMObjectMap;
 import com.mzh.emock.util.EMObjectMatcher;
 import com.mzh.emock.util.EMProxyTool;
 import com.mzh.emock.util.EMUtil;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
@@ -177,7 +175,7 @@ public class EMSupport {
         List<Method> methods = new ArrayList<>();
         ResourcePatternResolver resolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
         MetadataReaderFactory readerFactory = new CachingMetadataReaderFactory(resourceLoader);
-        List<String> paths = EMConfigurationProperties.SCAN_PATH;
+        List<String> paths = EMConfigurationProperties.SCAN_PACKAGE;
         for (String path : paths) {
             Resource[] resources = resolver.getResources(EMUtil.formatResourcePath(path));
             for (Resource resource : resources) {

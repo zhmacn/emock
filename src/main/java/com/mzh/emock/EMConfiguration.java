@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
         havingValue = EMConfigurationProperties.Constant.ENABLED_CONFIGURATION_VALUE)
 @EnableConfigurationProperties(EMConfigurationProperties.class)
 public class EMConfiguration {
-    private final Logger logger=Logger.get(EMConfiguration.class);
 
     @Bean
     @Conditional(EMConfigurationProperties.ProcessorMatcher.class)

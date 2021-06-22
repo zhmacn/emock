@@ -12,8 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class EMObjectMatcher {
     private static final int initSize=2000;
-    private static Object[] hasRead = new Object[initSize];
-    private static int curr=0;
+    private static final Set<Object> hasRead=new HashSet<>(initSize);
     private static Object currentTarget=null;
     private static final List<Class<?>> excludeClz=Arrays.asList(
             Class.class, Constructor.class,Method.class,Field.class,
@@ -21,19 +20,10 @@ public class EMObjectMatcher {
 
     private final Map<Object,List<FieldInfo>> holdingObject=new EMObjectMap<>();
     private boolean hasRead(Object o){
-        for(int i=0;i<curr;i++){
-            if(o==hasRead[i]){
-                return true;
-            }
-        }
-        return false;
+        return hasRead.contains(o);
     }
     private void addRead(Object o){
-        if(curr==hasRead.length){
-            hasRead=Arrays.copyOf(hasRead,hasRead.length*2);
-        }
-        hasRead[curr]=o;
-        curr++;
+        hasRead.add(o);
     }
 
     private EMObjectMatcher() {
@@ -79,8 +69,7 @@ public class EMObjectMatcher {
     public static Map<Object,List<FieldInfo>> match(Object src, Object target) {
         if(target!=currentTarget){
             System.out.println("em-matcher: handle object : "+target);
-            hasRead=new Object[initSize];
-            curr=0;
+            hasRead.clear();
             currentTarget=target;
         }
         EMObjectMatcher result = new EMObjectMatcher();

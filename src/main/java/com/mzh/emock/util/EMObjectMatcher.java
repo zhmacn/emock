@@ -3,13 +3,14 @@ package com.mzh.emock.util;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class EMObjectMatcher {
     private static final int initSize=2000;
     private static Object[] hasRead = new Object[initSize];
     private static int curr=0;
     private static Object currentTarget=null;
-    private static final List<Class<?>> excludeClz=Arrays.asList(Method.class,Field.class);
+    private static final List<Class<?>> excludeClz=Arrays.asList(Class.class,Method.class,Field.class);
 
     private final Map<Object,List<FieldInfo>> holdingObject=new EMObjectMap<>();
     private boolean hasRead(Object o){
@@ -29,6 +30,7 @@ public class EMObjectMatcher {
     }
 
     private EMObjectMatcher() {
+
     }
 
     public static class FieldInfo {
@@ -66,11 +68,14 @@ public class EMObjectMatcher {
         }
     }
 
+
     public static Map<Object,List<FieldInfo>> match(Object src, Object target) {
         if(target!=currentTarget){
             System.out.println("em-matcher: handle object : "+target);
-            hasRead=new Object[initSize];
+            //hasRead=new Object[initSize];
             curr=0;
+           // Map<String,Long> map=Arrays.stream(EMObjectMatcher.hasRead).filter(c->c!=null).map(c->c.getClass()).collect(Collectors.groupingBy(Class::getName,Collectors.summingLong(c->1L)));
+           // List<String> ll=map.keySet().stream().filter(c->map.get(c)>50).sorted(Comparator.comparingInt(c-> Math.toIntExact(-1*map.get(c)))).map(c->c+"-->"+map.get(c)).collect(Collectors.toList());
             currentTarget=target;
         }
         EMObjectMatcher result = new EMObjectMatcher();

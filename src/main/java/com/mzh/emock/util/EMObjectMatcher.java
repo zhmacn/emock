@@ -16,9 +16,8 @@ public class EMObjectMatcher {
     private static int curr=0;
     private static Object currentTarget=null;
     private static final List<Class<?>> excludeClz=Arrays.asList(
-            Class.class, Constructor.class
-            ,Method.class,Field.class
-    , Type.class, BigDecimal.class, BigInteger.class, AtomicLong.class, AtomicInteger.class);
+            Class.class, Constructor.class,Method.class,Field.class,
+            Type.class, BigDecimal.class, BigInteger.class, AtomicLong.class, AtomicInteger.class);
 
     private final Map<Object,List<FieldInfo>> holdingObject=new EMObjectMap<>();
     private boolean hasRead(Object o){

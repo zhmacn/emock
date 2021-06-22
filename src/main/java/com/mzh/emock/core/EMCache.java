@@ -17,9 +17,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class EMCache {
 
@@ -78,8 +82,8 @@ public class EMCache {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            Object mock = doMock(proxy, method, args, oldBean,injectClz);
-            return mock == null ? method.invoke(oldBean, args) : mock;
+            Object n=tryNoProxyMethod(proxy,method,args);
+            return n==null?doMockElse(proxy,method,args,()->method.invoke(oldBean,args)):n;
         }
     }
 
@@ -89,9 +93,9 @@ public class EMCache {
         }
 
         @Override
-        public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-            Object mock = doMock(o, method, objects, oldBean,injectClz);
-            return mock == null ? method.invoke(oldBean, objects) : mock;
+        public Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+            Object n=tryNoProxyMethod(proxy,method,args);
+            return n==null?doMockElse(proxy,method,args,()->method.invoke(oldBean,args)):n;
         }
     }
 
@@ -104,19 +108,43 @@ public class EMCache {
         }
 
         @Override
-        public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-            Method realMethod = (Method) objects[1];
-            Object mock = doMock(o, realMethod, (Object[]) objects[2], oldBean,injectClz);
-            return mock == null ? oldHandler.invoke(oldBean, realMethod, (Object[]) objects[2]) : mock;
+        public Object intercept(Object proxy, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+            Object noProxyResult=tryNoProxyMethod(proxy,method,args);
+            if(noProxyResult==null){
+                if(method.getName().equals("invoke")){
+                    Method rMethod=(Method)args[0];
+                    Object[] rArgs=Arrays.copyOfRange(args,1,args.length-1);
+                    return doMockElse(proxy,rMethod,rArgs,()->oldHandler.invoke(oldBean,rMethod,rArgs));
+                }
+                return method.invoke(oldHandler,args);
+            }
+            return noProxyResult;
         }
     }
     public static abstract class EInvocationHandler{
+        private final List<String> noProxyMethodName= Arrays.asList("toString","equals","hashCode");
         protected final Object oldBean;
         protected final Class<?> injectClz;
         public EInvocationHandler(Object oldBean,Class<?> injectClz){
             this.oldBean=oldBean;
             this.injectClz=injectClz;
         }
+
+        protected Object tryNoProxyMethod(Object proxy, Method method, Object[] args)throws Throwable{
+            if(noProxyMethodName.contains(method.getName())){
+                return method.invoke(proxy,args);
+            }
+            return null;
+        }
+        protected Object doMockElse(Object proxy,Method method,Object[] args, DoElse<Object> doElse)throws Throwable{
+                Object mock = doMock(proxy, method, args, oldBean, injectClz);
+                return mock == null ? doElse.get() : mock;
+        }
+    }
+
+    @FunctionalInterface
+    private interface DoElse<T>{
+        T get() throws Throwable;
     }
 
 }

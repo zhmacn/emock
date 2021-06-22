@@ -4,13 +4,20 @@ import com.mzh.emock.util.EMObjectMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class EMProxyHolder {
+    private int proxyHash;
     private Object proxy;
     private List<EMObjectMatcher.FieldInfo> injectField;
 
     public EMProxyHolder(Object proxy) {
         this.proxy = proxy;
+        this.proxyHash=999000000+new Random().nextInt(1000000);
+    }
+
+    public int getProxyHash() {
+        return proxyHash;
     }
 
     public Object getProxy() {
@@ -36,4 +43,5 @@ public class EMProxyHolder {
         }
         injectField.add(fieldInfo);
     }
+
 }

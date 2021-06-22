@@ -22,7 +22,7 @@ public class EMBeanInfo<T>{
 
     public EMBeanInfo(@NonNull T mockedBean,
                       @NonNull EMBeanDefinitionSource<T> definitionSource){
-        this.id= EMCache.idSequence.getAndIncrement();
+        this.id= EMCache.ID_SEQUENCE.getAndIncrement();
         this.isMocked= EMConfigurationProperties.MOCK_BEAN_ON_INIT;
         this.mockedBean=mockedBean;
         this.definitionSource=definitionSource;

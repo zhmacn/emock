@@ -137,7 +137,7 @@ public class EMManagerService {
         }
         String importPart=StringUtil.isEmpty(codes[0])?"":new String(Base64.getDecoder().decode(codes[0]), StandardCharsets.UTF_8);
         String codePart=new String(Base64.getDecoder().decode(codes[1]),StandardCharsets.UTF_8);
-        String clzName="EMDynamicInvoker_i_"+EMCache.idSequence.getAndIncrement();
+        String clzName="EMDynamicInvoker_i_"+EMCache.ID_SEQUENCE.getAndIncrement();
         Map<String,String> codePlaceHolder=new HashMap<>();
         codePlaceHolder.put(EMCodeTemplate.NAME_HOLDER,clzName);
         codePlaceHolder.put(EMCodeTemplate.IMPORT_HOLDER,importPart);

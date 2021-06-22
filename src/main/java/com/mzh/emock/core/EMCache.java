@@ -1,5 +1,6 @@
 package com.mzh.emock.core;
 
+import com.mzh.emock.type.EMBean;
 import com.mzh.emock.type.EMRelatedObject;
 import com.mzh.emock.type.bean.EMBeanInfo;
 import com.mzh.emock.type.bean.definition.EMBeanDefinitionSource;
@@ -29,7 +30,7 @@ public class EMCache {
 
     public static final Object lock=new Object();
 
-    public static AtomicLong idSequence=new AtomicLong(0);
+    public static AtomicLong ID_SEQUENCE=new AtomicLong(0);
 
     public static final List<EMBeanDefinitionSource<?>> EM_DEFINITION_SOURCES = new ArrayList<>();
 
@@ -122,7 +123,6 @@ public class EMCache {
         }
     }
     public static abstract class EInvocationHandler{
-        private final List<String> noProxyMethodName= Arrays.asList("toString","equals","hashCode");
         protected final Object oldBean;
         protected final Class<?> injectClz;
         public EInvocationHandler(Object oldBean,Class<?> injectClz){
@@ -130,9 +130,15 @@ public class EMCache {
             this.injectClz=injectClz;
         }
 
-        protected Object tryNoProxyMethod(Object proxy, Method method, Object[] args)throws Throwable{
-            if(noProxyMethodName.contains(method.getName())){
-                return method.invoke(proxy,args);
+        protected Object tryNoProxyMethod(Object proxy, Method method, Object[] args){
+            String name=method.getName();
+            switch (name){
+                case "hashCode":
+                    return EMCache.EM_OBJECT_MAP.get(oldBean).getProxyHolder().get(injectClz).getProxyHash();
+                case "toString":
+                    return proxy.getClass().getName()+"@EM:+"+proxy.hashCode();
+                case "equals":
+                    return proxy==args[0];
             }
             return null;
         }

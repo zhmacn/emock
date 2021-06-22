@@ -18,7 +18,7 @@ public class EMRelatedObject {
     private Map<Class<?>,EMProxyHolder> proxyHolder=new EMObjectMap<>();
 
     public EMRelatedObject(String oldBeanName,Object oldBean){
-        this.id= EMCache.idSequence.getAndIncrement();
+        this.id= EMCache.ID_SEQUENCE.getAndIncrement();
         this.oldBean=oldBean;
         this.oldBeanName=oldBeanName;
     }

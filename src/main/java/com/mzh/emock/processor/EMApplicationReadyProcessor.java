@@ -12,19 +12,13 @@ import org.springframework.core.io.ResourceLoader;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
-public class EMApplicationReadyProcessor implements ApplicationListener<ApplicationReadyEvent>, Ordered {
+public class EMApplicationReadyProcessor extends EMAbstractProcessor implements ApplicationListener<ApplicationReadyEvent>, Ordered {
     private static final Logger logger= Logger.get(EMApplicationReadyProcessor.class);
 
-    private final AbstractApplicationContext context;
-    private final ResourceLoader resourceLoader;
-
     public EMApplicationReadyProcessor(AbstractApplicationContext context, ResourceLoader resourceLoader){
-        logger.info("EMApplicationReadyProcessor loaded");
-        this.context=context;
-        this.resourceLoader=resourceLoader;
-        logger.info("init PMockProcessor: bean:defaultProcessor,context:"+context.toString()+",resourceLoader:"+resourceLoader.toString());
+        super(context, resourceLoader);
+        logger.info("Effective Processor: EMApplicationReadyProcessor,context:"+context.toString()+",resourceLoader:"+resourceLoader.toString());
     }
-
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {

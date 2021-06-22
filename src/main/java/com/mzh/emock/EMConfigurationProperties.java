@@ -19,14 +19,17 @@ public class EMConfigurationProperties {
         public static final String ENABLED_CONFIGURATION_VALUE="true";
         public static final String ENABLED_MANAGER_NAME="enabled-manager";
         public static final String PROPERTIES_FILE_NAME=CONFIGURATION_PREFIX+"-com.mzh.emock.EMConfigurationProperties";
+        public static final String PROCESSOR_TYPE="processor-type";
+        public static final String TYPE_RD="application-ready";
+        public static final String TYPE_AW="auto-wired";
     }
     public static final List<String> FILTER=new ArrayList<>();
     public static long WAIT_FOR_APPLICATION_READY=5*60*1000L;
-    public static String ENABLED_PROCESSOR="com.mzh.emock.processor.EMApplicationReadyProcessor";
     public static final  List<String> ENABLED_PROFILES= Collections.synchronizedList(new ArrayList<String>(){{add("test");add("dev");}});
     public static final List<String> SCAN_PACKAGE=Collections.synchronizedList(new ArrayList<>());
     public static boolean MOCK_BEAN_ON_INIT=true;
     public static boolean MOCK_METHOD_ON_INIT=true;
+
 
     public void setEnabledProfiles(@NonNull List<String> profiles){
         ENABLED_PROFILES.clear();
@@ -59,18 +62,5 @@ public class EMConfigurationProperties {
         MOCK_METHOD_ON_INIT=isMock;
     }
 
-    public void setEnabledProcessor(@NonNull String processorName){
-        ENABLED_PROCESSOR=processorName;
-    }
-
-    public static class ProcessorMatcher implements Condition{
-        @Override
-        public boolean matches(ConditionContext conditionContext, AnnotatedTypeMetadata annotatedTypeMetadata) {
-            if(annotatedTypeMetadata instanceof MethodMetadata){
-                return ((MethodMetadata)annotatedTypeMetadata).getReturnTypeName().equals(ENABLED_PROCESSOR);
-            }
-            return false;
-        }
-    }
 
 }

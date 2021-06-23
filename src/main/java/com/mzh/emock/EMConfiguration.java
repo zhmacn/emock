@@ -1,7 +1,6 @@
 package com.mzh.emock;
 
 import com.mzh.emock.manager.controller.EMManagerController;
-import com.mzh.emock.processor.EMAbstractProcessor;
 import com.mzh.emock.processor.EMApplicationReadyProcessor;
 import com.mzh.emock.processor.EMAutoWiredProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+import com.mzh.emock.EMConfigurationProperties.*;
 
 
 @Component
@@ -24,19 +24,19 @@ public class EMConfiguration {
 
     //---------------------------------processor-------------------------------//
 
-
-    //@Bean
-    //public EMApplicationReadyProcessor emAbstractProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
-    //    return new EMApplicationReadyProcessor(context,resourceLoader);
-    //}
-
     @Bean
-    //@ConditionalOnProperty(prefix = EMConfigurationProperties.Constant.CONFIGURATION_PREFIX,
-    //name = EMConfigurationProperties.Constant.PROCESSOR_TYPE,
-    //        havingValue = EMConfigurationProperties.Constant.TYPE_AW)
+    @ConditionalOnProperty(prefix = Constant.CONFIGURATION_PREFIX, name = Constant.PROCESSOR_TYPE, havingValue = Constant.TYPE_AW)
     public EMAutoWiredProcessor emAutowiredProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
         return new EMAutoWiredProcessor(context,resourceLoader);
     }
+
+    @Bean
+    @ConditionalOnMissingBean(EMAutoWiredProcessor.class)
+    public EMApplicationReadyProcessor emAbstractProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
+        return new EMApplicationReadyProcessor(context,resourceLoader);
+    }
+
+
 
 
 
@@ -44,9 +44,7 @@ public class EMConfiguration {
     //----------------------------------manager-----------------------------------//
 
     @Bean
-    @ConditionalOnProperty(prefix=EMConfigurationProperties.Constant.CONFIGURATION_PREFIX,
-            name = EMConfigurationProperties.Constant.ENABLED_MANAGER_NAME,
-            havingValue = EMConfigurationProperties.Constant.ENABLED_CONFIGURATION_VALUE)
+    @ConditionalOnProperty(prefix=Constant.CONFIGURATION_PREFIX, name = Constant.ENABLED_MANAGER_NAME, havingValue = Constant.ENABLED_CONFIGURATION_VALUE)
     public EMManagerController managerController(){
         return new EMManagerController();
     }

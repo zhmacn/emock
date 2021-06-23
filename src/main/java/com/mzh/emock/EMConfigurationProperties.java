@@ -1,10 +1,6 @@
 package com.mzh.emock;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.core.type.AnnotatedTypeMetadata;
-import org.springframework.core.type.MethodMetadata;
 import org.springframework.lang.NonNull;
 
 import java.util.ArrayList;

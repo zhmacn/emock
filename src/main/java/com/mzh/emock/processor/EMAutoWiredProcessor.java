@@ -1,27 +1,18 @@
 package com.mzh.emock.processor;
 
-import com.mzh.emock.core.EMSupport;
 import com.mzh.emock.log.Logger;
-import com.mzh.emock.util.EMObjectMatcher;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.io.ResourceLoader;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
 
 public class EMAutoWiredProcessor extends EMAbstractProcessor implements BeanDefinitionRegistryPostProcessor {
     private final Logger logger=Logger.get(EMAutoWiredProcessor.class);
@@ -38,20 +29,24 @@ public class EMAutoWiredProcessor extends EMAbstractProcessor implements BeanDef
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory factory) throws BeansException {
         /*
-        AutowiredAnnotationBeanPostProcessor processor=(AutowiredAnnotationBeanPostProcessor)factory.getBean(AutowiredAnnotationBeanPostProcessor.class);
-        Map<Object, List<EMObjectMatcher.FieldInfo>> holders= EMObjectMatcher.match(factory,processor);
         try {
+            AutowiredAnnotationBeanPostProcessor processor= factory.getBean(AutowiredAnnotationBeanPostProcessor.class);
+            AutowiredAnnotationBeanPostProcessor proxyProcessor=createProxy(processor);
+            //BeanDefinition definition=factory.getBeanDefinition("org.springframework.context.annotation.internalAutowiredAnnotationProcessor");
+            //Field field=definition.getClass().getSuperclass().getDeclaredField("beanClass");
+            //field.setAccessible(true);
+            Map<Object, List<EMObjectMatcher.FieldInfo>> holders= EMObjectMatcher.match(factory,processor);
+            //field.set(definition,proxyProcessor.getClass());
             for (Object holder : holders.keySet()) {
                 List<EMObjectMatcher.FieldInfo> fieldInfoList = holders.get(holder);
                 for (EMObjectMatcher.FieldInfo fieldInfo : fieldInfoList) {
-                    EMSupport.doInject(fieldInfo, holder, createProxy(processor));
+                    EMSupport.doInject(fieldInfo, holder, proxyProcessor);
                 }
             }
         }catch (Exception ex){
             throw new BeanCreationException("aax");
         }
-        *
-         */
+        */
     }
 
     private AutowiredAnnotationBeanPostProcessor createProxy(AutowiredAnnotationBeanPostProcessor processor){

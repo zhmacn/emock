@@ -16,7 +16,6 @@ public class EMMethodInfo {
     public EMMethodInfo(Method method){
         this.nativeMethod=method;
         this.name=method.getName();
-        this.isMock= EMConfigurationProperties.MOCK_METHOD_ON_INIT;
     }
 
 

@@ -1,6 +1,8 @@
 package com.mzh.emock.processor;
 
+import com.mzh.emock.core.EMSupport;
 import com.mzh.emock.log.Logger;
+import com.mzh.emock.util.EMObjectMatcher;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
@@ -10,8 +12,16 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.core.io.ResourceLoader;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 
 public class EMAutoWiredProcessor extends EMAbstractProcessor implements BeanDefinitionRegistryPostProcessor {
     private final Logger logger=Logger.get(EMAutoWiredProcessor.class);
@@ -23,28 +33,45 @@ public class EMAutoWiredProcessor extends EMAbstractProcessor implements BeanDef
 
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        String[] names=registry.getBeanDefinitionNames();
-        for(String name:names){
-            BeanDefinition definition=registry.getBeanDefinition(name);
-            if(AutowiredAnnotationBeanPostProcessor.class.getName().equals(definition.getBeanClassName())){
-                registry.removeBeanDefinition(name);
-                RootBeanDefinition newDef=new RootBeanDefinition(MyAutoWired.class);
-                registry.registerBeanDefinition(name,newDef);
-            }
-
-        }
     }
 
     @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) throws BeansException {
-
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory factory) throws BeansException {
+        /*
+        AutowiredAnnotationBeanPostProcessor processor=(AutowiredAnnotationBeanPostProcessor)factory.getBean(AutowiredAnnotationBeanPostProcessor.class);
+        Map<Object, List<EMObjectMatcher.FieldInfo>> holders= EMObjectMatcher.match(factory,processor);
+        try {
+            for (Object holder : holders.keySet()) {
+                List<EMObjectMatcher.FieldInfo> fieldInfoList = holders.get(holder);
+                for (EMObjectMatcher.FieldInfo fieldInfo : fieldInfoList) {
+                    EMSupport.doInject(fieldInfo, holder, createProxy(processor));
+                }
+            }
+        }catch (Exception ex){
+            throw new BeanCreationException("aax");
+        }
+        *
+         */
     }
 
-    public static class MyAutoWired extends AutowiredAnnotationBeanPostProcessor{
+    private AutowiredAnnotationBeanPostProcessor createProxy(AutowiredAnnotationBeanPostProcessor processor){
+        Enhancer enhancer=new Enhancer();
+        enhancer.setSuperclass(AutowiredAnnotationBeanPostProcessor.class);
+        enhancer.setCallback(new MyMethodInterceptor(processor));
+        return (AutowiredAnnotationBeanPostProcessor) enhancer.create();
+    }
+
+    private static class MyMethodInterceptor implements MethodInterceptor{
+        private final AutowiredAnnotationBeanPostProcessor nativeProcessor;
+
+        public MyMethodInterceptor(AutowiredAnnotationBeanPostProcessor processor) {
+            this.nativeProcessor=processor;
+        }
+
         @Override
-        public void processInjection(Object bean) throws BeanCreationException {
-            System.out.println("clz:"+bean.getClass());
-            super.processInjection(bean);
+        public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+            System.out.println("processor invoker-->method:"+method.getName()+",args:"+objects);
+            return method.invoke(nativeProcessor,objects);
         }
     }
 

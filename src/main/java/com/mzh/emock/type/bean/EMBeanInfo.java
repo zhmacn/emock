@@ -9,6 +9,7 @@ import com.mzh.emock.util.EMUtil;
 import org.springframework.lang.NonNull;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,17 +21,21 @@ public class EMBeanInfo<T>{
     private EMBeanDefinitionSource<T> definitionSource;
     private Map<String, EMMethodInfo> invokeMethods=new ConcurrentHashMap<>();
 
-    public EMBeanInfo(@NonNull T mockedBean,
-                      @NonNull EMBeanDefinitionSource<T> definitionSource){
+    public EMBeanInfo(@NonNull T mb,
+                      @NonNull EMBeanDefinitionSource<T> ds){
         this.id= EMCache.ID_SEQUENCE.getAndIncrement();
-        this.isMocked= EMConfigurationProperties.MOCK_BEAN_ON_INIT;
-        this.mockedBean=mockedBean;
-        this.definitionSource=definitionSource;
-        EMUtil.optWithParent(definitionSource.getTargetClz(), c->{
+        this.isMocked= ds.isBeanEnableMock();
+        this.mockedBean=mb;
+        this.definitionSource=ds;
+        EMUtil.optWithParent(ds.getTargetClz(), c->{
             if(c!=Object.class) {
                 Method[] methods = c.getDeclaredMethods();
                 for(Method method:methods) {
                     EMMethodInfo methodInfo=new EMMethodInfo(method);
+                    methodInfo.setMock(ds.isMethodEnableMock());
+                    if(Arrays.stream(ds.getReverseEnabledMethods()).anyMatch(s->s.equals(method.getName()))){
+                        methodInfo.setMock(!methodInfo.isMock());
+                    }
                     this.invokeMethods.put(method.getName(),methodInfo);
                 }
             }

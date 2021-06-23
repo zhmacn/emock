@@ -13,4 +13,7 @@ import java.lang.annotation.Target;
 public @interface EMBean {
     int order() default Ordered.LOWEST_PRECEDENCE;
     String name() default "";
+    boolean beanEnableMock() default true;
+    boolean methodEnableMock() default true;
+    String[] reverseEnabledMethod() default {};
 }

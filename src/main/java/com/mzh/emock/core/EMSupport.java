@@ -107,24 +107,29 @@ public class EMSupport {
         }
     }
     private static void createProxyAndSetField(EMObjectMatcher.FieldInfo info, Object holder,Object target) throws Exception {
+        Class<?> clz;
         if(info.isArrayIndex()){
-            Object old=((Object[])holder)[info.getIndex()];
-            if(old==target) {
-                Class<?> clz=findBestMatchClz(target,info.getNativeField().getType().getComponentType());
-                EMProxyHolder proxyHolder = EMProxyTool.createProxy(clz, target);
-                proxyHolder.addInjectField(info);
-                ((Object[]) holder)[info.getIndex()] = proxyHolder.getProxy();
-            }else{
-                logger.error("array object index changed "+",obj:"+holder);
-            }
+            if(((Object[])holder)[info.getIndex()]!=target){logger.error("array object index changed "+",obj:"+holder);return;}
+            clz=findBestMatchClz(target,info.getNativeField().getType().getComponentType());
         }else{
-            Class<?> clz=findBestMatchClz(target,info.getNativeField().getType());
-            EMProxyHolder proxyHolder= EMProxyTool.createProxy(clz, target);
-            proxyHolder.addInjectField(info);
-            info.getNativeField().setAccessible(true);
-            info.getNativeField().set(holder,proxyHolder.getProxy());
+            clz=findBestMatchClz(target,info.getNativeField().getType());
         }
+        EMProxyHolder proxyHolder = EMProxyTool.createProxy(clz, target);
+        proxyHolder.addInjectField(info);
+        doInject(info,holder,proxyHolder.getProxy());
     }
+
+    public static boolean doInject(EMObjectMatcher.FieldInfo fieldInfo,Object holder,Object proxy)throws Exception{
+        if(fieldInfo.isArrayIndex()){
+            ((Object[]) holder)[fieldInfo.getIndex()] = proxy;
+        }else{
+            fieldInfo.getNativeField().setAccessible(true);
+            fieldInfo.getNativeField().set(holder,proxy);
+        }
+        return true;
+    }
+
+
 
     private static Class<?> findBestMatchClz(Object oldBean,Class<?> fieldClz){
         Set<Class<?>> curr=EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo().keySet();

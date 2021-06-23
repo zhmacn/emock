@@ -29,12 +29,14 @@ public class EMBeanDefinitionSource<T> {
         for(Annotation annotation:annotations){
             this.annotations.put(annotation.annotationType(),annotation);
         }
-        this.name=deduceName();
-        this.order=deduceOrder();
+        deduceEMBeanAnnotationInfo();
     }
     private final Class<?> srcClz;
-    private final String name;
+    private String name;
     private int order;
+    private boolean beanEnableMock;
+    private boolean methodEnableMock;
+    private String[] reverseEnabledMethods;
     private final Class<T> targetClz;
     private EMBeanDefinition<T> beanDefinition;
 
@@ -47,25 +49,19 @@ public class EMBeanDefinitionSource<T> {
         }
     };
 
-    private String deduceName(){
+    private void deduceEMBeanAnnotationInfo(){
         EMBean emBean=(EMBean) this.annotations.get(EMBean.class);
-        if(emBean!=null && !StringUtil.isEmpty(emBean.name())){
-            return emBean.name();
+        if(emBean==null){
+           return ;
         }
-        return srcMethod.getName();
+        this.beanEnableMock= emBean.beanEnableMock();
+        this.methodEnableMock= emBean.methodEnableMock();
+        String name=emBean.name();
+        this.name=StringUtil.isEmpty(name)?this.srcMethod.getName():name;
+        this.reverseEnabledMethods=emBean.reverseEnabledMethod();
+        this.order=emBean.order();
     }
 
-    private int deduceOrder(){
-        Order order = (Order) this.annotations.get(Order.class);
-        if (order != null) {
-            return order.value();
-        }
-        EMBean orderN = (EMBean) this.annotations.get(EMBean.class);
-        if (orderN != null) {
-            return orderN.order();
-        }
-        return Ordered.LOWEST_PRECEDENCE;
-    }
 
 
     public void createBeanDefinition(ApplicationContext context)throws Exception{
@@ -122,5 +118,31 @@ public class EMBeanDefinitionSource<T> {
         this.order = order;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 
+    public boolean isBeanEnableMock() {
+        return beanEnableMock;
+    }
+
+    public void setBeanEnableMock(boolean beanEnableMock) {
+        this.beanEnableMock = beanEnableMock;
+    }
+
+    public boolean isMethodEnableMock() {
+        return methodEnableMock;
+    }
+
+    public void setMethodEnableMock(boolean methodEnableMock) {
+        this.methodEnableMock = methodEnableMock;
+    }
+
+    public String[] getReverseEnabledMethods() {
+        return reverseEnabledMethods;
+    }
+
+    public void setReverseEnabledMethods(String[] reverseEnabledMethods) {
+        this.reverseEnabledMethods = reverseEnabledMethods;
+    }
 }

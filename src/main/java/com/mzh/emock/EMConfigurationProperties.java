@@ -27,8 +27,6 @@ public class EMConfigurationProperties {
     public static long WAIT_FOR_APPLICATION_READY=5*60*1000L;
     public static final  List<String> ENABLED_PROFILES= Collections.synchronizedList(new ArrayList<String>(){{add("test");add("dev");}});
     public static final List<String> SCAN_PACKAGE=Collections.synchronizedList(new ArrayList<>());
-    public static boolean MOCK_BEAN_ON_INIT=true;
-    public static boolean MOCK_METHOD_ON_INIT=true;
 
 
     public void setEnabledProfiles(@NonNull List<String> profiles){
@@ -53,14 +51,5 @@ public class EMConfigurationProperties {
         FILTER.clear();
         FILTER.addAll(filters);
     }
-
-    public void setMockBeanOnInit(@NonNull boolean isMock){
-        MOCK_BEAN_ON_INIT=isMock;
-    }
-
-    public void setMockMethodOnInit(@NonNull boolean isMock){
-        MOCK_METHOD_ON_INIT=isMock;
-    }
-
 
 }

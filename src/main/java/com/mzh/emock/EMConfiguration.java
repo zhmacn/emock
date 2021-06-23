@@ -24,14 +24,11 @@ public class EMConfiguration {
 
     //---------------------------------processor-------------------------------//
 
-    /*
-    @Bean
-    //@ConditionalOnMissingBean(EMAbstractProcessor.class)
-    public EMApplicationReadyProcessor emAbstractProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
-        return new EMApplicationReadyProcessor(context,resourceLoader);
-    }
-    *
-     */
+
+    //@Bean
+    //public EMApplicationReadyProcessor emAbstractProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
+    //    return new EMApplicationReadyProcessor(context,resourceLoader);
+    //}
 
     @Bean
     //@ConditionalOnProperty(prefix = EMConfigurationProperties.Constant.CONFIGURATION_PREFIX,

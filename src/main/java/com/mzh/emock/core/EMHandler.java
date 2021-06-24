@@ -99,27 +99,17 @@ public class EMHandler {
                     if(methodInfo.isMock()) {
                         if (methodInfo.getDynamicInvokerName() != null) {
                             EMMethodInvoker<Object, Object[]> dynamicInvoker = methodInfo.getDynamicInvokers().get(methodInfo.getDynamicInvokerName());
-                            Object mocked=checkReturnType(dynamicInvoker.invoke(new ESimpleInvoker(oldBean, method), new ESimpleInvoker(mockBeanInfo.getMockedBean(), method), args),method);
+                            Object mocked=dynamicInvoker.invoke(new ESimpleInvoker(oldBean, method), new ESimpleInvoker(mockBeanInfo.getMockedBean(), method), args);
                             return result.setResult(mocked).setMock(true);
                         }
-                        Object mocked=checkReturnType(method.invoke(mockBeanInfo.getMockedBean(), args),method);
+                        Object mocked=method.invoke(mockBeanInfo.getMockedBean(), args);
                         return result.setResult(mocked).setMock(true);
                     }
                 }
             }
             return result.setMock(false);
         }
-        private Object checkReturnType(Object result,Method method)throws Exception{
-            if(result==null){
-                return null;
-            }
-            Class<?> returnClz=method.getReturnType();
 
-            if(returnClz.isAssignableFrom(result.getClass())){
-                return result;
-            }
-            throw new Exception("em:result cast error: "+result.getClass().getSimpleName()+" to "+returnClz.getSimpleName());
-        }
     }
 
     public static class EInterfaceProxyInvocationHandler extends EInvocationHandler implements InvocationHandler {

@@ -29,6 +29,7 @@ import org.springframework.util.PatternMatchUtils;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EMSupport {
     private static final Logger logger = Logger.get(EMSupport.class);
@@ -69,21 +70,31 @@ public class EMSupport {
      * @param beanName
      * @param oldBean
      */
-    public static void createEMBeanIfNecessary(String beanName, Object oldBean, BeanDefinition oldDefinition) {
-        EMCache.EM_DEFINITION_SOURCES.stream().filter(ds->ds.getBeanDefinition().isMatch(beanName,oldBean))
-                .forEach(ds->{
+    public static boolean createEMBeanIfNecessary(String beanName, Object oldBean, BeanDefinition oldDefinition) {
+        AtomicBoolean isCreate= new AtomicBoolean(false);
+        EMCache.EM_DEFINITION_SOURCES.stream().filter(ds->ds.getBeanDefinition().isMatch(beanName,oldBean)
+                && !hasCreateBeanForThisDefinition(oldBean,ds)).forEach(ds->{
                     EMCache.EM_OBJECT_MAP.computeIfAbsent(oldBean,r->new EMRelatedObject(beanName,oldBean));
                     EMBeanInfo<?> newBean=createMockBean(oldBean,ds);
                     EMCache.EM_OBJECT_MAP.get(oldBean).setOldDefinition(oldDefinition);
                     Map<Class<?>,List<EMBeanInfo<?>>> infoMap=EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo();
                     infoMap.computeIfAbsent(ds.getTargetClz(),l->new ArrayList<>());
                     infoMap.get(ds.getTargetClz()).add(newBean);
+                    isCreate.set(true);
                     infoMap.get(ds.getTargetClz()).sort(Comparator.comparingInt(e->e.getDefinitionSource().getOrder()));
                 });
+        return isCreate.get();
     }
 
     private static <T> EMBeanInfo<T> createMockBean(Object oldBean, EMBeanDefinitionSource<T> ds) {
         return new EMBeanInfo<>(ds.getBeanDefinition().getWrapper().wrap(ds.getTargetClz().cast(oldBean)),ds);
+    }
+    private static boolean hasCreateBeanForThisDefinition(Object oldBean,EMBeanDefinitionSource<?> ds){
+        return EMCache.EM_OBJECT_MAP.get(oldBean)!=null &&
+                EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo()!=null &&
+                EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo().get(ds.getTargetClz())!=null &&
+                EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo().get(ds.getTargetClz())
+                        .stream().anyMatch(bi->bi.getDefinitionSource()==ds);
     }
 
     /**
@@ -151,7 +162,6 @@ public class EMSupport {
         }
         return bestMatch;
     }
-
 
 
     private static String[] loadEMNameMatcher(ApplicationContext context) {

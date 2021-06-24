@@ -17,7 +17,7 @@ public class EMConfigurationProperties {
         public static final String PROPERTIES_FILE_NAME=CONFIGURATION_PREFIX+"-com.mzh.emock.EMConfigurationProperties";
         public static final String PROCESSOR_TYPE="processor-type";
         public static final String TYPE_RD="application-ready";
-        public static final String TYPE_AW="auto-wired";
+        public static final String TYPE_AB="after-post-bean";
     }
     public static final List<String> FILTER=new ArrayList<>();
     public static long WAIT_FOR_APPLICATION_READY=5*60*1000L;

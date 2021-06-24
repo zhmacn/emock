@@ -2,7 +2,7 @@ package com.mzh.emock;
 
 import com.mzh.emock.manager.controller.EMManagerController;
 import com.mzh.emock.processor.EMApplicationReadyProcessor;
-import com.mzh.emock.processor.EMAutoWiredProcessor;
+import com.mzh.emock.processor.EMAfterPostBeanProcessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -25,13 +25,13 @@ public class EMConfiguration {
     //---------------------------------processor-------------------------------//
 
     @Bean
-    @ConditionalOnProperty(prefix = Constant.CONFIGURATION_PREFIX, name = Constant.PROCESSOR_TYPE, havingValue = Constant.TYPE_AW)
-    public EMAutoWiredProcessor emAutowiredProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
-        return new EMAutoWiredProcessor(context,resourceLoader);
+    @ConditionalOnProperty(prefix = Constant.CONFIGURATION_PREFIX, name = Constant.PROCESSOR_TYPE, havingValue = Constant.TYPE_AB)
+    public EMAfterPostBeanProcessor emAfterPostBeanProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
+        return new EMAfterPostBeanProcessor(context,resourceLoader);
     }
 
     @Bean
-    @ConditionalOnMissingBean(EMAutoWiredProcessor.class)
+    @ConditionalOnMissingBean(EMAfterPostBeanProcessor.class)
     public EMApplicationReadyProcessor emAbstractProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
         return new EMApplicationReadyProcessor(context,resourceLoader);
     }

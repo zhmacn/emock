@@ -3,21 +3,15 @@ package com.mzh.emock.manager.code;
 import com.mzh.emock.type.bean.method.EMMethodInvoker;
 !!$$$IMPORT_HOLDER$$$
 
-public class !!$$$CLZ_NAME$$$ implements EMMethodInvoker<Object,Object[]> {
+public class !!$$$CLZ_NAME$$$ implements EMMethodInvoker<!!$$$RETURN_TYPE$$$,Object[]> {
 
     public String base64Code;
     public !!$$$CLZ_NAME$$$(String base64Code){
         this.base64Code=base64Code;
     }
 
-    @Override
-    public Object invoke(SimpleInvoker<Object, Object[]> oldMethod, SimpleInvoker<Object, Object[]> newMethod, Object[] args) {
-        try{
-            !!$$$CODE_HOLDER$$$
-        }catch(Throwable t){
-            return "em:unhandled exception:"+t.getMessage();
-        }
-    }
+    !!$$$CODE_HOLDER$$$
+
 
     @Override
     public String getCode() {

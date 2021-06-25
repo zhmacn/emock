@@ -137,11 +137,67 @@ public class EMObjectExchange {
         }
     }
 
+    public static class EMMethodSignatureExchange{
+        private long beanId;
+        private String methodName;
+        private String returnType;
+        private String parameterList;
+        private String simpleSignature;
+        private String importCode;
+
+        public long getBeanId() {
+            return beanId;
+        }
+
+        public void setBeanId(long beanId) {
+            this.beanId = beanId;
+        }
+
+        public String getMethodName() {
+            return methodName;
+        }
+
+        public void setMethodName(String methodName) {
+            this.methodName = methodName;
+        }
+
+        public String getReturnType() {
+            return returnType;
+        }
+
+        public void setReturnType(String returnType) {
+            this.returnType = returnType;
+        }
+
+        public String getParameterList() {
+            return parameterList;
+        }
+
+        public void setParameterList(String parameterList) {
+            this.parameterList = parameterList;
+        }
+
+        public String getSimpleSignature() {
+            return simpleSignature;
+        }
+
+        public void setSimpleSignature(String simpleSignature) {
+            this.simpleSignature = simpleSignature;
+        }
+
+        public String getImportCode() {
+            return importCode;
+        }
+
+        public void setImportCode(String importCode) {
+            this.importCode = importCode;
+        }
+    }
+
     public static class EMMethodExchange{
         private String methodName;
         private boolean mock;
         private String dynamicInvokeName;
-        private String methodSignature;
         private Map<String,EMDynamicInvokeExchange> dynamicInvokes;
 
         public boolean isMock() {
@@ -158,14 +214,6 @@ public class EMObjectExchange {
 
         public void setMethodName(String methodName) {
             this.methodName = methodName;
-        }
-
-        public String getMethodSignature() {
-            return methodSignature;
-        }
-
-        public void setMethodSignature(String methodSignature) {
-            this.methodSignature = methodSignature;
         }
 
         public String getDynamicInvokeName() {

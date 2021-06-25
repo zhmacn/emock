@@ -42,7 +42,6 @@ public class EMManagerController {
     public String query(String oldBeanName,boolean includeBean,boolean includeProxy){
         return builder.create().toJson(EMManagerService.query(oldBeanName,includeBean,includeProxy));
     }
-
     @RequestMapping(value = "/update",method = RequestMethod.POST)
     public String update(@RequestBody List<EMObjectExchange> exchange){
         return EMManagerService.update(exchange);

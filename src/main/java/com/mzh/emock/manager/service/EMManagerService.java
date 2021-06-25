@@ -13,15 +13,17 @@ import com.mzh.emock.type.bean.method.EMMethodInvoker;
 import com.mzh.emock.type.proxy.EMProxyHolder;
 import com.mzh.emock.util.EMStringUtil;
 import com.mzh.emock.util.entity.EMFieldInfo;
+import com.mzh.emock.util.entity.EMMethodSignature;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class EMManagerService {
-    public static List<EMObjectExchange> query(String name,boolean includeBean,boolean includeProxy){
+    public static Map<String,Object> query(String name,boolean includeBean,boolean includeProxy){
+        Map<String,Object> t=new HashMap<>();
         List<EMObjectExchange> result=new ArrayList<>();
+        List<EMObjectExchange.EMMethodSignatureExchange> signature=new ArrayList<>();
         for(EMRelatedObject rt:EMCache.EM_OBJECT_MAP.values()){
             if(EMStringUtil.isEmpty(name)
                     || rt.getOldBeanName().toUpperCase().contains(name.toUpperCase())){
@@ -32,9 +34,24 @@ public class EMManagerService {
                 exchange.setOldObject(rt.getOldBean().toString());
                 exchange.setEmInfo(toRTExchange(rt,includeBean,includeProxy));
                 result.add(exchange);
+                rt.getEmInfo().values().forEach(eml->eml.forEach(em->em.getInvokeMethods().values().forEach(mi->{
+                    EMObjectExchange.EMMethodSignatureExchange se=new EMObjectExchange.EMMethodSignatureExchange();
+                    EMMethodSignature si=mi.getMethodSignature();
+                    se.setBeanId(em.getId());
+                    se.setMethodName(mi.getName());
+                    se.setReturnType(si.getReturnType());
+                    se.setSimpleSignature(si.getSimpleSignature());
+                    se.setImportCode(si.getImportList().stream().reduce("",(o,n)->o+"import "+n+";\r\n"));
+                    se.setParameterList(si.getParameterList());
+                    signature.add(se);
+                })));
             }
         }
-        return result;
+
+
+        t.put("show",result);
+        t.put("hide",signature);
+        return t;
     }
     public static String update(List<EMObjectExchange> exchanges){
         if(exchanges==null){
@@ -93,7 +110,7 @@ public class EMManagerService {
             if(!EMStringUtil.isEmpty(sourceCode)){
                 EMMethodInvoker<Object,Object[]> currInvoker=methodInfo.getDynamicInvokers().get(dynamicMethodName);
                 if(currInvoker==null || !sourceCode.equals(currInvoker.getCode())) {
-                    EMInvokerCreateResult result=createInvoker(sourceCode);
+                    EMInvokerCreateResult result=createInvoker(methodInfo,sourceCode);
                     if(result.isSuccess()){
                         methodInfo.getDynamicInvokers().put(dynamicMethodName, result.getInvoker());
                     }else{
@@ -131,7 +148,7 @@ public class EMManagerService {
 
 
 
-    private static EMInvokerCreateResult createInvoker(String srcCode){
+    private static EMInvokerCreateResult createInvoker(EMMethodInfo methodInfo,String srcCode){
         String[] codes=srcCode.split("_");
         if(codes.length!=2 || EMStringUtil.isEmpty(codes[1])){
             return new EMInvokerCreateResult(false,"code format error",null);
@@ -143,6 +160,7 @@ public class EMManagerService {
         codePlaceHolder.put(EMCodeTemplate.NAME_HOLDER,clzName);
         codePlaceHolder.put(EMCodeTemplate.IMPORT_HOLDER,importPart);
         codePlaceHolder.put(EMCodeTemplate.CODE_HOLDER,codePart);
+        codePlaceHolder.put(EMCodeTemplate.RETURN_HOLDER,methodInfo.getMethodSignature().getReturnType());
         String fullCodeStr=generateCode(EMCodeTemplate.simpleInvokeTemplatePath,codePlaceHolder);
         try {
             Map<String,byte[]> byteCode= EMRTCompiler.compile(clzName+".java",fullCodeStr);
@@ -244,7 +262,6 @@ public class EMManagerService {
             EMObjectExchange.EMMethodExchange methodExchange=new EMObjectExchange.EMMethodExchange();
             methodExchange.setMethodName(name);
             methodExchange.setMock(methodInfo.isMock());
-            methodExchange.setMethodSignature(methodInfo.getMethodSignature().getSimpleSignature());
             methodExchange.setDynamicInvokeName(methodInfo.getDynamicInvokerName());
             Map<String, EMObjectExchange.EMDynamicInvokeExchange> dynamicInvokeExchanges=new HashMap<>();
             for(String invokerName:methodInfo.getDynamicInvokers().keySet()){

@@ -24,6 +24,7 @@
             <input type="text" id="mockBeanId" placeholder="mockBeanId">
             <input type="text" id="methodName" placeholder="methodName">
             <input type="text" id="invokerName" placeholder="invokerName">
+            <input type="button" id="newInvoker" value="newInvoker">
             <br/>
             <input id="decode" type="button" value="decode"/>
             <input id="removeInovker" type="button" value="removeInovker">
@@ -40,13 +41,7 @@
         </div>
         <div>
             <span>code part:</span><br/>
-            <label style="position:absolute;font-size:small;width:100%">@Override<br/>
-                public Object invoke(
-                SimpleInvoker oldMethod,
-                SimpleInvoker newMethod,
-                Object[] args) {
-            </label>
-            <textarea id="codePart" style="width:100%;height:55%;padding-top:40px;"></textarea>
+            <textarea id="codePart" style="width:100%;height:55%;"></textarea>
         </div>
     </div>
 </div>
@@ -54,6 +49,7 @@
 </body>
 <script type="text/javascript">
         var co="";
+        var hi="";
         document.getElementById('query').onclick=function(){
             var xhr=new XMLHttpRequest();
             var clzName=document.getElementById("clzName").value;
@@ -62,7 +58,9 @@
             xhr.open("post","/mzh/em/manager/query?oldBeanName="+encodeURIComponent(clzName)+"&includeBean="+includeBean+"&includeProxy="+includeProxy);
             xhr.onload=function(){
                 if(xhr.status==200){
-                    co=JSON.parse(xhr.responseText);
+                    var v=JSON.parse(xhr.responseText);
+                    co=v.show;
+                    hi=v.hide;
                     refreshContext();
                 }else{
                     alert(xhr.status+"-"+xhr.statusText);
@@ -195,6 +193,25 @@
             var methodInfo=findMatchedMethodInfo();
             methodInfo.dynamicInvokeName=invokerName;
             refreshContext();
+        }
+
+        document.getElementById('newInvoker').onclick=function(){
+            var method=findMatchedMethodInfo();
+            if(method==null){
+                alert("no matched method");
+                return;
+            }
+            document.getElementById('encodeCode').value='';
+            var beanId=document.getElementById('mockBeanId').value;
+            var methodName=document.getElementById('methodName').value;
+            var hh=hi.filter(h=>h.beanId==beanId).filter(h=>h.methodName==methodName)[0];
+            document.getElementById('importPart').value=hh.importCode;
+            document.getElementById('codePart').value='@Override\r\n'+
+            'public '+hh.returnType+' invoke(SimpleInvoker<'+hh.returnType+', Object[]> oldMethod, '
+            +'SimpleInvoker<'+hh.returnType+', Object[]> newMethod, Object[] args) {\r\n\r\n'
+            +"    // code here\r\n\r\n"
+            +'}';
+
         }
 
         function refreshContext(){

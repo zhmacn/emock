@@ -24,7 +24,7 @@ public class EMBeanInfo<T>{
         this.isMocked= ds.isBeanEnableMock();
         this.mockedBean=mb;
         this.definitionSource=ds;
-        EMClassUtil.getAllDeclaredMethods(ds.getTargetClz(),m->m.getDeclaringClass()!=Object.class)
+        EMClassUtil.getAllMethods(ds.getTargetClz(),m->m.getDeclaringClass()!=Object.class)
         .forEach(method->{
             EMMethodInfo methodInfo=new EMMethodInfo(method);
             methodInfo.setMock(ds.isMethodEnableMock());

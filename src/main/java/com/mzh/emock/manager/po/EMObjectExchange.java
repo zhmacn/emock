@@ -141,6 +141,7 @@ public class EMObjectExchange {
         private String methodName;
         private boolean mock;
         private String dynamicInvokeName;
+        private String methodSignature;
         private Map<String,EMDynamicInvokeExchange> dynamicInvokes;
 
         public boolean isMock() {
@@ -157,6 +158,14 @@ public class EMObjectExchange {
 
         public void setMethodName(String methodName) {
             this.methodName = methodName;
+        }
+
+        public String getMethodSignature() {
+            return methodSignature;
+        }
+
+        public void setMethodSignature(String methodSignature) {
+            this.methodSignature = methodSignature;
         }
 
         public String getDynamicInvokeName() {

@@ -11,11 +11,11 @@ import com.mzh.emock.type.bean.EMBeanInfo;
 import com.mzh.emock.type.bean.method.EMMethodInfo;
 import com.mzh.emock.type.bean.method.EMMethodInvoker;
 import com.mzh.emock.type.proxy.EMProxyHolder;
-import com.mzh.emock.util.EMObjectUtil;
 import com.mzh.emock.util.EMStringUtil;
 import com.mzh.emock.util.entity.EMFieldInfo;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -244,6 +244,7 @@ public class EMManagerService {
             EMObjectExchange.EMMethodExchange methodExchange=new EMObjectExchange.EMMethodExchange();
             methodExchange.setMethodName(name);
             methodExchange.setMock(methodInfo.isMock());
+            methodExchange.setMethodSignature(methodInfo.getMethodSignature().getSimpleSignature());
             methodExchange.setDynamicInvokeName(methodInfo.getDynamicInvokerName());
             Map<String, EMObjectExchange.EMDynamicInvokeExchange> dynamicInvokeExchanges=new HashMap<>();
             for(String invokerName:methodInfo.getDynamicInvokers().keySet()){
@@ -257,4 +258,5 @@ public class EMManagerService {
         }
         return methodExchanges;
     }
+
 }

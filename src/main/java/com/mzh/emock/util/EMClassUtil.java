@@ -1,11 +1,13 @@
 package com.mzh.emock.util;
 
+import com.mzh.emock.util.entity.EMMethodSignature;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class EMClassUtil {
 
@@ -42,10 +44,10 @@ public class EMClassUtil {
         return res;
     }
 
-    public static List<Method> getAllDeclaredMethods(Class<?> clz,Function<Method,Boolean> filter){
+    public static List<Method> getAllMethods(Class<?> clz,Function<Method,Boolean> filter){
         List<Method> res=new ArrayList<>();
         hierarchyClazz(clz,c->{
-            Method[] methods=c.getDeclaredMethods();
+            Method[] methods=c.getMethods();
             for(Method method:methods){
                 if(filter.apply(method)){ res.add(method);}
             }

@@ -43,24 +43,6 @@ public class EMManagerController {
         return builder.create().toJson(EMManagerService.query(oldBeanName,includeBean,includeProxy));
     }
 
-
-    @RequestMapping(value = "/queryMethodSignature")
-    public String queryMethodSignature(int id,String method){
-        List<EMMethodInfo> targetMethod=new ArrayList<>();
-        EMCache.EM_OBJECT_MAP.values().forEach(
-                h->h.getEmInfo().values().forEach(
-                        bl->bl.stream().filter(b->b.getId()==id).collect(Collectors.toList()).forEach(
-                                bf->targetMethod.addAll(bf.getInvokeMethods().values().stream().filter(m->m.getName().equals(method)).collect(Collectors.toList()))
-                        )));
-        if(targetMethod.size()==0){
-            return "";
-        }
-        Method rMethod=targetMethod.get(0).getNativeMethod();
-        Class<?> returnType=rMethod.getReturnType();
-        //Type type=rMethod.getGenericReturnType();
-        return returnType.getCanonicalName();
-    }
-
     @RequestMapping(value = "/update",method = RequestMethod.POST)
     public String update(@RequestBody List<EMObjectExchange> exchange){
         return EMManagerService.update(exchange);

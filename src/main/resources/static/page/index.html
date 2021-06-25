@@ -141,7 +141,6 @@
             return null;
         }
 
-
         document.getElementById('decode').onclick=function(){
             var invoker=findMatchedInvoker();
             if(invoker==null){
@@ -154,6 +153,7 @@
             document.getElementById('encodeCode').value=code;
             document.getElementById('importPart').value=atob(importPart);
             document.getElementById('codePart').value=atob(codePart);
+
         }
         document.getElementById("removeInovker").onclick=function(){
             var invoker=findMatchedInvoker();

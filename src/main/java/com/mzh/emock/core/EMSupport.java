@@ -198,7 +198,7 @@ public class EMSupport {
             for (Resource resource : resources) {
                 MetadataReader reader = readerFactory.getMetadataReader(resource);
                 Class<?> clz = classLoader.loadClass(reader.getClassMetadata().getClassName());
-                methods.addAll(EMClassUtil.getAllDeclaredMethods(clz,EMSupport::isEMDefinition));
+                methods.addAll(EMClassUtil.getAllMethods(clz,EMSupport::isEMDefinition));
             }
         }
         return methods;

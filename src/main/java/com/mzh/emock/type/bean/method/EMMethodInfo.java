@@ -1,6 +1,6 @@
 package com.mzh.emock.type.bean.method;
 
-import com.mzh.emock.EMConfigurationProperties;
+import com.mzh.emock.util.entity.EMMethodSignature;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -9,13 +9,13 @@ import java.util.Map;
 public class EMMethodInfo {
     private String name;
     private boolean isMock;
+    private EMMethodSignature methodSignature;
     private Map<String, EMMethodInvoker<Object,Object[]>> dynamicInvokers=new HashMap<>();
-    private Method nativeMethod;
     private String dynamicInvokerName;
 
     public EMMethodInfo(Method method){
-        this.nativeMethod=method;
         this.name=method.getName();
+        this.methodSignature=new EMMethodSignature(method);
     }
 
 
@@ -35,13 +35,6 @@ public class EMMethodInfo {
         this.dynamicInvokers = dynamicInvokers;
     }
 
-    public Method getNativeMethod() {
-        return nativeMethod;
-    }
-
-    public void setNativeMethod(Method nativeMethod) {
-        this.nativeMethod = nativeMethod;
-    }
 
     public String getDynamicInvokerName() {
         return dynamicInvokerName;
@@ -57,5 +50,13 @@ public class EMMethodInfo {
 
     public void setMock(boolean mock) {
         isMock = mock;
+    }
+
+    public EMMethodSignature getMethodSignature() {
+        return methodSignature;
+    }
+
+    public void setMethodSignature(EMMethodSignature methodSignature) {
+        this.methodSignature = methodSignature;
     }
 }

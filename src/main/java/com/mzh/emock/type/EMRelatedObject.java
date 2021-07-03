@@ -3,7 +3,7 @@ package com.mzh.emock.type;
 import com.mzh.emock.core.EMCache;
 import com.mzh.emock.type.bean.EMBeanInfo;
 import com.mzh.emock.type.proxy.EMProxyHolder;
-import com.mzh.emock.util.EMObjectMap;
+import com.mzh.emock.util.entity.EMObjectMap;
 import org.springframework.beans.factory.config.BeanDefinition;
 
 import java.util.List;

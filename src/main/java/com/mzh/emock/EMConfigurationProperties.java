@@ -1,10 +1,6 @@
 package com.mzh.emock;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.core.type.AnnotatedTypeMetadata;
-import org.springframework.core.type.MethodMetadata;
 import org.springframework.lang.NonNull;
 
 import java.util.ArrayList;
@@ -21,7 +17,7 @@ public class EMConfigurationProperties {
         public static final String PROPERTIES_FILE_NAME=CONFIGURATION_PREFIX+"-com.mzh.emock.EMConfigurationProperties";
         public static final String PROCESSOR_TYPE="processor-type";
         public static final String TYPE_RD="application-ready";
-        public static final String TYPE_AW="auto-wired";
+        public static final String TYPE_AB="after-bean-post";
     }
     public static final List<String> FILTER=new ArrayList<>();
     public static long WAIT_FOR_APPLICATION_READY=5*60*1000L;

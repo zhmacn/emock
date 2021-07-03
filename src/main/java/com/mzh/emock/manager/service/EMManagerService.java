@@ -11,18 +11,21 @@ import com.mzh.emock.type.bean.EMBeanInfo;
 import com.mzh.emock.type.bean.method.EMMethodInfo;
 import com.mzh.emock.type.bean.method.EMMethodInvoker;
 import com.mzh.emock.type.proxy.EMProxyHolder;
-import com.mzh.emock.util.EMObjectMatcher;
-import com.mzh.emock.util.StringUtil;
+import com.mzh.emock.util.EMStringUtil;
+import com.mzh.emock.util.entity.EMFieldInfo;
+import com.mzh.emock.util.entity.EMMethodSignature;
 
 import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class EMManagerService {
-    public static List<EMObjectExchange> query(String name,boolean includeBean,boolean includeProxy){
+    public static Map<String,Object> query(String name,boolean includeBean,boolean includeProxy){
+        Map<String,Object> t=new HashMap<>();
         List<EMObjectExchange> result=new ArrayList<>();
+        List<EMObjectExchange.EMMethodSignatureExchange> signature=new ArrayList<>();
         for(EMRelatedObject rt:EMCache.EM_OBJECT_MAP.values()){
-            if(StringUtil.isEmpty(name)
+            if(EMStringUtil.isEmpty(name)
                     || rt.getOldBeanName().toUpperCase().contains(name.toUpperCase())){
                 EMObjectExchange exchange=new EMObjectExchange();
                 exchange.setId(rt.getId());
@@ -31,9 +34,24 @@ public class EMManagerService {
                 exchange.setOldObject(rt.getOldBean().toString());
                 exchange.setEmInfo(toRTExchange(rt,includeBean,includeProxy));
                 result.add(exchange);
+                rt.getEmInfo().values().forEach(eml->eml.forEach(em->em.getInvokeMethods().values().forEach(mi->{
+                    EMObjectExchange.EMMethodSignatureExchange se=new EMObjectExchange.EMMethodSignatureExchange();
+                    EMMethodSignature si=mi.getMethodSignature();
+                    se.setBeanId(em.getId());
+                    se.setMethodName(mi.getName());
+                    se.setReturnType(si.getReturnType());
+                    se.setSimpleSignature(si.getSimpleSignature());
+                    se.setImportCode(si.getImportList().stream().reduce("",(o,n)->o+"import "+n+";\r\n"));
+                    se.setParameterList(si.getParameterList());
+                    signature.add(se);
+                })));
             }
         }
-        return result;
+
+
+        t.put("show",result);
+        t.put("hide",signature);
+        return t;
     }
     public static String update(List<EMObjectExchange> exchanges){
         if(exchanges==null){
@@ -77,7 +95,7 @@ public class EMManagerService {
             EMMethodInfo methodInfo=emBeanInfo.getInvokeMethods().get(methodExchange.getMethodName());
             methodInfo.setMock(methodExchange.isMock());
             String updateInfo=updateDynamicInvoker(methodInfo,methodExchange);
-            if(!StringUtil.isEmpty(updateInfo)){
+            if(!EMStringUtil.isEmpty(updateInfo)){
                 sb.append(updateInfo).append("\r\n");
             }
         }
@@ -89,10 +107,10 @@ public class EMManagerService {
         for(String dynamicMethodName:methodExchange.getDynamicInvokes().keySet()){
             EMObjectExchange.EMDynamicInvokeExchange dynamicInvokeExchange=methodExchange.getDynamicInvokes().get(dynamicMethodName);
             String sourceCode=dynamicInvokeExchange.getSrcCode();
-            if(!StringUtil.isEmpty(sourceCode)){
+            if(!EMStringUtil.isEmpty(sourceCode)){
                 EMMethodInvoker<Object,Object[]> currInvoker=methodInfo.getDynamicInvokers().get(dynamicMethodName);
                 if(currInvoker==null || !sourceCode.equals(currInvoker.getCode())) {
-                    EMInvokerCreateResult result=createInvoker(sourceCode);
+                    EMInvokerCreateResult result=createInvoker(methodInfo,sourceCode);
                     if(result.isSuccess()){
                         methodInfo.getDynamicInvokers().put(dynamicMethodName, result.getInvoker());
                     }else{
@@ -130,18 +148,19 @@ public class EMManagerService {
 
 
 
-    private static EMInvokerCreateResult createInvoker(String srcCode){
+    private static EMInvokerCreateResult createInvoker(EMMethodInfo methodInfo,String srcCode){
         String[] codes=srcCode.split("_");
-        if(codes.length!=2 || StringUtil.isEmpty(codes[1])){
+        if(codes.length!=2 || EMStringUtil.isEmpty(codes[1])){
             return new EMInvokerCreateResult(false,"code format error",null);
         }
-        String importPart=StringUtil.isEmpty(codes[0])?"":new String(Base64.getDecoder().decode(codes[0]), StandardCharsets.UTF_8);
+        String importPart= EMStringUtil.isEmpty(codes[0])?"":new String(Base64.getDecoder().decode(codes[0]), StandardCharsets.UTF_8);
         String codePart=new String(Base64.getDecoder().decode(codes[1]),StandardCharsets.UTF_8);
         String clzName="EMDynamicInvoker_i_"+EMCache.ID_SEQUENCE.getAndIncrement();
         Map<String,String> codePlaceHolder=new HashMap<>();
         codePlaceHolder.put(EMCodeTemplate.NAME_HOLDER,clzName);
         codePlaceHolder.put(EMCodeTemplate.IMPORT_HOLDER,importPart);
         codePlaceHolder.put(EMCodeTemplate.CODE_HOLDER,codePart);
+        codePlaceHolder.put(EMCodeTemplate.RETURN_HOLDER,methodInfo.getMethodSignature().getReturnType());
         String fullCodeStr=generateCode(EMCodeTemplate.simpleInvokeTemplatePath,codePlaceHolder);
         try {
             Map<String,byte[]> byteCode= EMRTCompiler.compile(clzName+".java",fullCodeStr);
@@ -226,9 +245,9 @@ public class EMManagerService {
         return proxyExchangeMap;
     }
 
-    private static List<String> toStringChain(List<EMObjectMatcher.FieldInfo> fieldInfos){
+    private static List<String> toStringChain(List<EMFieldInfo> fieldInfos){
         List<String> ls=new ArrayList<>();
-        for(EMObjectMatcher.FieldInfo fi:fieldInfos){
+        for(EMFieldInfo fi:fieldInfos){
             StringBuilder sb=new StringBuilder(256);
             fi.getFieldTrace().forEach(s->sb.append(" -> ").append(s));
             ls.add(sb.toString());
@@ -256,4 +275,5 @@ public class EMManagerService {
         }
         return methodExchanges;
     }
+
 }

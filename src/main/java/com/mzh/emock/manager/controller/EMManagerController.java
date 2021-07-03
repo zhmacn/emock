@@ -1,19 +1,25 @@
 package com.mzh.emock.manager.controller;
 
 import com.google.gson.GsonBuilder;
+import com.mzh.emock.core.EMCache;
 import com.mzh.emock.manager.po.EMObjectExchange;
 import com.mzh.emock.manager.service.EMManagerService;
 import com.mzh.emock.manager.tools.ResourceTool;
+import com.mzh.emock.type.bean.method.EMMethodInfo;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/mzh/em/manager")

@@ -1,5 +1,8 @@
 package com.mzh.emock.util;
 
+import com.mzh.emock.util.entity.EMFieldInfo;
+import com.mzh.emock.util.entity.EMObjectMap;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -10,7 +13,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class EMObjectMatcher {
+public class EMObjectUtil {
     private static final int initSize=2000;
     private static final Set<Object> hasRead=new HashSet<>(initSize);
     private static Object currentTarget=null;
@@ -18,7 +21,7 @@ public class EMObjectMatcher {
             Class.class, Constructor.class,Method.class,Field.class,
             Type.class, BigDecimal.class, BigInteger.class, AtomicLong.class, AtomicInteger.class);
 
-    private final Map<Object,List<FieldInfo>> holdingObject=new EMObjectMap<>();
+    private final Map<Object,List<EMFieldInfo>> holdingObject=new EMObjectMap<>();
     private boolean hasRead(Object o){
         return hasRead.contains(o);
     }
@@ -26,65 +29,26 @@ public class EMObjectMatcher {
         hasRead.add(o);
     }
 
-    private EMObjectMatcher() {
+    private EMObjectUtil() { }
 
-    }
-
-    public static class FieldInfo {
-        public FieldInfo(int index,List<String> trace) {
-            this.index = index;
-            this.isArrayIndex = true;
-            this.fieldTrace=trace;
-        }
-
-        public FieldInfo(Field field,List<String> trace) {
-            this.nativeField = field;
-            this.isArrayIndex = false;
-            this.fieldTrace=trace;
-        }
-
-        private final boolean isArrayIndex;
-        private Field nativeField;
-        private int index;
-        List<String> fieldTrace;
-
-        public boolean isArrayIndex() {
-            return isArrayIndex;
-        }
-
-        public Field getNativeField() {
-            return nativeField;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public List<String> getFieldTrace() {
-            return fieldTrace;
-        }
-    }
-
-
-    public static Map<Object,List<FieldInfo>> match(Object src, Object target) {
+    public static Map<Object,List<EMFieldInfo>> match(Object src, Object target) {
         if(target!=currentTarget){
             System.out.println("em-matcher: handle object : "+target);
             hasRead.clear();
             currentTarget=target;
         }
-        EMObjectMatcher result = new EMObjectMatcher();
+        EMObjectUtil result = new EMObjectUtil();
         result.getAllDeclaredFieldsHierarchy(src, result.holdingObject, target,new ArrayList<String>(){{add(src.getClass().getName());}});
         return result.holdingObject;
     }
 
-
-    private void getAllDeclaredFieldsHierarchy(Object src, Map<Object, List<FieldInfo>> holdingObject, Object target,List<String> trace) {
-        if (src == null || !isIncludeField(src.getClass()) ||  hasRead(src)) {
+    private void getAllDeclaredFieldsHierarchy(Object src, Map<Object, List<EMFieldInfo>> holdingObject, Object target,List<String> trace) {
+        if (src == null || !isIncludeClazz(src.getClass()) ||  hasRead(src)) {
             return;
         }
         try {
             addRead(src);
-            List<Field> fields = getAllDeclaredFields(src.getClass());
+            List<Field> fields = EMClassUtil.getAllDeclaredFields(src.getClass(),this::isIncludeField);
             for (Field field : fields) {
                 field.setAccessible(true);
                 Object value = field.get(src);
@@ -92,14 +56,14 @@ public class EMObjectMatcher {
                     continue;
                 }
                 List<String> newTrace=createTrace(trace,field,value,-1);
-                if (field.getType().isArray() && isIncludeField(field.getType())) {
+                if (field.getType().isArray() && isIncludeField(field)) {
                     findInArray((Object[]) value, holdingObject, target,newTrace);
                     continue;
                 }
                 if (value == target) {
                     if (holdingObject.get(src) == null)
                         holdingObject.computeIfAbsent(src, k -> new ArrayList<>());
-                    holdingObject.get(src).add(new FieldInfo(field,newTrace));
+                    holdingObject.get(src).add(new EMFieldInfo(field,newTrace));
                 }
                 getAllDeclaredFieldsHierarchy(value, holdingObject, target,newTrace);
             }
@@ -108,7 +72,7 @@ public class EMObjectMatcher {
         }
     }
 
-    private void findInArray(Object[] src, Map<Object, List<FieldInfo>> holdingObject, Object target,List<String> trace) {
+    private void findInArray(Object[] src, Map<Object, List<EMFieldInfo>> holdingObject, Object target,List<String> trace) {
         if (src == null || hasRead(src)) {
             return;
         }
@@ -119,14 +83,14 @@ public class EMObjectMatcher {
                 continue;
             }
             List<String> newTrace=createTrace(trace,null,value,i);
-            if (value.getClass().isArray() && isIncludeField(value.getClass())) {
+            if (value.getClass().isArray() && isIncludeClazz(value.getClass())) {
                 findInArray((Object[]) value, holdingObject, target,newTrace);
                 continue;
             }
             if (value == target) {
                 if (holdingObject.get(src) == null)
                     holdingObject.computeIfAbsent(src, k -> new ArrayList<>());
-                holdingObject.get(src).add(new FieldInfo(i,newTrace));
+                holdingObject.get(src).add(new EMFieldInfo(i,newTrace));
             }
             getAllDeclaredFieldsHierarchy(value, holdingObject, target,newTrace);
         }
@@ -142,36 +106,13 @@ public class EMObjectMatcher {
         return newTrace;
     }
 
-    private Class<?> getRawType(Class<?> srcType){
-        if(srcType.isArray()){
-            srcType=srcType.getComponentType();
-        }
-        return srcType;
+    private boolean isIncludeField(Field srcField){
+        Class<?> type=EMClassUtil.getRawType(srcField.getType());
+        return EMClassUtil.isReferenceField(type) && !excludeClz.contains(type);
     }
-
-    private boolean isReferenceField(Class<?> type) {
-        return  !type.isEnum() && !type.isPrimitive() && type != String.class
-                && type != Character.class && type != Boolean.class
-                && type != Byte.class && type != Short.class && type != Integer.class && type != Long.class
-                && type != Float.class && type != Double.class;
-    }
-
-    private boolean isIncludeField(Class<?> srcType){
-        Class<?> type=getRawType(srcType);
-        return isReferenceField(type) && !excludeClz.contains(type);
-    }
-
-    private List<Field> getAllDeclaredFields(Class<?> clz) {
-        List<Field> res = new ArrayList<>();
-        EMUtil.optWithParent(clz, c -> {
-            Field[] fields = c.getDeclaredFields();
-            for (Field field : fields) {
-                if (isIncludeField(field.getType())) {
-                    res.add(field);
-                }
-            }
-        });
-        return res;
+    private boolean isIncludeClazz(Class<?> srcType){
+        Class<?> type=EMClassUtil.getRawType(srcType);
+        return EMClassUtil.isReferenceField(type) && !excludeClz.contains(type);
     }
 
 }

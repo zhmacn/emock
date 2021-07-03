@@ -8,9 +8,11 @@ import com.mzh.emock.type.bean.EMBeanInfo;
 import com.mzh.emock.type.bean.definition.EMBeanDefinitionSource;
 import com.mzh.emock.type.bean.definition.EMBeanDefinition;
 import com.mzh.emock.type.proxy.EMProxyHolder;
-import com.mzh.emock.util.EMObjectMatcher;
-import com.mzh.emock.util.EMProxyTool;
-import com.mzh.emock.util.EMUtil;
+import com.mzh.emock.util.EMClassUtil;
+import com.mzh.emock.util.EMObjectUtil;
+import com.mzh.emock.util.EMProxyUtil;
+import com.mzh.emock.util.EMResourceUtil;
+import com.mzh.emock.util.entity.EMFieldInfo;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -27,6 +29,7 @@ import org.springframework.util.PatternMatchUtils;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EMSupport {
     private static final Logger logger = Logger.get(EMSupport.class);
@@ -67,21 +70,31 @@ public class EMSupport {
      * @param beanName
      * @param oldBean
      */
-    public static void createEMBeanIfNecessary(String beanName, Object oldBean, BeanDefinition oldDefinition) {
-        EMCache.EM_DEFINITION_SOURCES.stream().filter(ds->ds.getBeanDefinition().isMatch(beanName,oldBean))
-                .forEach(ds->{
+    public static boolean createEMBeanIfNecessary(String beanName, Object oldBean, BeanDefinition oldDefinition) {
+        AtomicBoolean isCreate= new AtomicBoolean(false);
+        EMCache.EM_DEFINITION_SOURCES.stream().filter(ds->ds.getBeanDefinition().isMatch(beanName,oldBean)
+                && !hasCreateBeanForThisDefinition(oldBean,ds)).forEach(ds->{
                     EMCache.EM_OBJECT_MAP.computeIfAbsent(oldBean,r->new EMRelatedObject(beanName,oldBean));
                     EMBeanInfo<?> newBean=createMockBean(oldBean,ds);
                     EMCache.EM_OBJECT_MAP.get(oldBean).setOldDefinition(oldDefinition);
                     Map<Class<?>,List<EMBeanInfo<?>>> infoMap=EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo();
                     infoMap.computeIfAbsent(ds.getTargetClz(),l->new ArrayList<>());
                     infoMap.get(ds.getTargetClz()).add(newBean);
+                    isCreate.set(true);
                     infoMap.get(ds.getTargetClz()).sort(Comparator.comparingInt(e->e.getDefinitionSource().getOrder()));
                 });
+        return isCreate.get();
     }
 
     private static <T> EMBeanInfo<T> createMockBean(Object oldBean, EMBeanDefinitionSource<T> ds) {
         return new EMBeanInfo<>(ds.getBeanDefinition().getWrapper().wrap(ds.getTargetClz().cast(oldBean)),ds);
+    }
+    private static boolean hasCreateBeanForThisDefinition(Object oldBean,EMBeanDefinitionSource<?> ds){
+        return EMCache.EM_OBJECT_MAP.get(oldBean)!=null &&
+                EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo()!=null &&
+                EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo().get(ds.getTargetClz())!=null &&
+                EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo().get(ds.getTargetClz())
+                        .stream().anyMatch(bi->bi.getDefinitionSource()==ds);
     }
 
     /**
@@ -98,15 +111,15 @@ public class EMSupport {
     }
 
     private static void createProxyAndSetField(Object src, Object target) throws Exception {
-        Map<Object, List<EMObjectMatcher.FieldInfo>> matchedObject = EMObjectMatcher.match(src, target);
+        Map<Object, List<EMFieldInfo>> matchedObject = EMObjectUtil.match(src, target);
         for (Object holder : matchedObject.keySet()) {
-            List<EMObjectMatcher.FieldInfo> fields = matchedObject.get(holder);
+            List<EMFieldInfo> fields = matchedObject.get(holder);
             for(int i=fields.size()-1;i>=0;i--){
                 createProxyAndSetField(fields.get(i),holder,target);
             }
         }
     }
-    private static void createProxyAndSetField(EMObjectMatcher.FieldInfo info, Object holder,Object target) throws Exception {
+    private static void createProxyAndSetField(EMFieldInfo info, Object holder, Object target) throws Exception {
         Class<?> clz;
         if(info.isArrayIndex()){
             if(((Object[])holder)[info.getIndex()]!=target){logger.error("array object index changed "+",obj:"+holder);return;}
@@ -114,12 +127,12 @@ public class EMSupport {
         }else{
             clz=findBestMatchClz(target,info.getNativeField().getType());
         }
-        EMProxyHolder proxyHolder = EMProxyTool.createProxy(clz, target);
+        EMProxyHolder proxyHolder = EMProxyUtil.createProxy(clz, target);
         proxyHolder.addInjectField(info);
         doInject(info,holder,proxyHolder.getProxy());
     }
 
-    public static boolean doInject(EMObjectMatcher.FieldInfo fieldInfo,Object holder,Object proxy)throws Exception{
+    public static boolean doInject(EMFieldInfo fieldInfo, Object holder, Object proxy)throws Exception{
         if(fieldInfo.isArrayIndex()){
             ((Object[]) holder)[fieldInfo.getIndex()] = proxy;
         }else{
@@ -149,7 +162,6 @@ public class EMSupport {
         }
         return bestMatch;
     }
-
 
 
     private static String[] loadEMNameMatcher(ApplicationContext context) {
@@ -182,18 +194,11 @@ public class EMSupport {
         MetadataReaderFactory readerFactory = new CachingMetadataReaderFactory(resourceLoader);
         List<String> paths = EMConfigurationProperties.SCAN_PACKAGE;
         for (String path : paths) {
-            Resource[] resources = resolver.getResources(EMUtil.formatResourcePath(path));
+            Resource[] resources = resolver.getResources(EMResourceUtil.formatResourcePath(path));
             for (Resource resource : resources) {
                 MetadataReader reader = readerFactory.getMetadataReader(resource);
                 Class<?> clz = classLoader.loadClass(reader.getClassMetadata().getClassName());
-                EMUtil.optWithParent(clz, c -> {
-                    Method[] clzMethods = c.getDeclaredMethods();
-                    for (Method method : clzMethods) {
-                        if (isEMDefinition(method)) {
-                            methods.add(method);
-                        }
-                    }
-                });
+                methods.addAll(EMClassUtil.getAllMethods(clz,EMSupport::isEMDefinition));
             }
         }
         return methods;

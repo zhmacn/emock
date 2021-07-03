@@ -1,6 +1,7 @@
 package com.mzh.emock.type.proxy;
 
-import com.mzh.emock.util.EMObjectMatcher;
+import com.mzh.emock.util.EMObjectUtil;
+import com.mzh.emock.util.entity.EMFieldInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.Random;
 public class EMProxyHolder {
     private int proxyHash;
     private Object proxy;
-    private List<EMObjectMatcher.FieldInfo> injectField;
+    private List<EMFieldInfo> injectField;
 
     public EMProxyHolder(Object proxy) {
         this.proxy = proxy;
@@ -29,15 +30,15 @@ public class EMProxyHolder {
     }
 
 
-    public List<EMObjectMatcher.FieldInfo> getInjectField() {
+    public List<EMFieldInfo> getInjectField() {
         return injectField;
     }
 
-    public void setInjectField(List<EMObjectMatcher.FieldInfo> injectField) {
+    public void setInjectField(List<EMFieldInfo> injectField) {
         this.injectField = injectField;
     }
 
-    public void addInjectField(EMObjectMatcher.FieldInfo fieldInfo){
+    public void addInjectField(EMFieldInfo fieldInfo){
         if(this.injectField==null){
             injectField=new ArrayList<>();
         }

@@ -42,6 +42,28 @@ public class EMHandler {
             this.oldBean=oldBean;
             this.injectClz=injectClz;
         }
+        private static class MockResult{
+            private boolean mock;
+            private Object result;
+
+            public boolean isMock() {
+                return mock;
+            }
+
+            public MockResult setMock(boolean mock) {
+                this.mock = mock;
+                return this;
+            }
+
+            public Object getResult() {
+                return result;
+            }
+
+            public MockResult setResult(Object result) {
+                this.result = result;
+                return this;
+            }
+        }
 
         protected Object tryNoProxyMethod(Object proxy, Method method, Object[] args){
             String name=method.getName();
@@ -56,18 +78,19 @@ public class EMHandler {
             return null;
         }
         protected Object doMockElse(Object proxy,Method method,Object[] args, DoElse<Object> doElse)throws Throwable{
-            Object mock = doMock(proxy, method, args);
-            return mock == null ? doElse.get() : mock;
+            MockResult result = doMock(proxy, method, args);
+            return result.isMock() ?result.getResult(): doElse.get();
         }
 
-        protected Object doMock(Object o, Method method, Object[] args) throws Exception {
+        protected MockResult doMock(Object o, Method method, Object[] args) throws Exception {
+            MockResult result=new MockResult();
             List<EMBeanInfo<?>> mockBeanInfoList=null;
             if (EMCache.EM_OBJECT_MAP.get(oldBean) != null &&  EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo()!=null
                     && EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo().get(injectClz)!=null) {
                 mockBeanInfoList=EMCache.EM_OBJECT_MAP.get(oldBean).getEmInfo().get(injectClz);
             }
             if(mockBeanInfoList==null || mockBeanInfoList.size()==0){
-                return null;
+                return result.setMock(false);
             }
             for(EMBeanInfo<?> mockBeanInfo:mockBeanInfoList){
                 if(mockBeanInfo.isMocked()){
@@ -76,16 +99,18 @@ public class EMHandler {
                     if(methodInfo.isMock()) {
                         if (methodInfo.getDynamicInvokerName() != null) {
                             EMMethodInvoker<Object, Object[]> dynamicInvoker = methodInfo.getDynamicInvokers().get(methodInfo.getDynamicInvokerName());
-                            return dynamicInvoker.invoke(new ESimpleInvoker(oldBean, method), new ESimpleInvoker(mockBeanInfo.getMockedBean(), method), args);
+                            Object mocked=dynamicInvoker.invoke(new ESimpleInvoker(oldBean, method), new ESimpleInvoker(mockBeanInfo.getMockedBean(), method), args);
+                            return result.setResult(mocked).setMock(true);
                         }
-                        return method.invoke(mockBeanInfo.getMockedBean(), args);
+                        Object mocked=method.invoke(mockBeanInfo.getMockedBean(), args);
+                        return result.setResult(mocked).setMock(true);
                     }
                 }
             }
-            return null;
+            return result.setMock(false);
         }
-    }
 
+    }
 
     public static class EInterfaceProxyInvocationHandler extends EInvocationHandler implements InvocationHandler {
         public EInterfaceProxyInvocationHandler(Object oldBean,Class<?> injectClz) {
@@ -133,8 +158,5 @@ public class EMHandler {
             return noProxyResult;
         }
     }
-
-
-
 
 }

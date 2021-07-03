@@ -1,7 +1,7 @@
 package com.mzh.emock.type.bean.definition;
 
 import com.mzh.emock.type.EMBean;
-import com.mzh.emock.util.StringUtil;
+import com.mzh.emock.util.EMStringUtil;
 import org.springframework.context.ApplicationContext;
 
 import java.lang.annotation.Annotation;
@@ -11,8 +11,6 @@ import java.lang.reflect.ParameterizedType;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import com.mzh.emock.type.bean.method.EMMethodInvoker.*;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 
 /**
  * 用于定义mockBean的定义信息来源
@@ -57,7 +55,7 @@ public class EMBeanDefinitionSource<T> {
         this.beanEnableMock= emBean.beanEnableMock();
         this.methodEnableMock= emBean.methodEnableMock();
         String name=emBean.name();
-        this.name=StringUtil.isEmpty(name)?this.srcMethod.getName():name;
+        this.name= EMStringUtil.isEmpty(name)?this.srcMethod.getName():name;
         this.reverseEnabledMethods=emBean.reverseEnabledMethod();
         this.order=emBean.order();
     }

@@ -1,4 +1,4 @@
-package com.mzh.emock.util;
+package com.mzh.emock.util.entity;
 
 
 import java.util.*;

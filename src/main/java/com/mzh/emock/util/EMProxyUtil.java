@@ -11,14 +11,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
-public class EMProxyTool {
+public class EMProxyUtil {
 
     public static EMProxyHolder createProxy(Class<?> targetClz, Object oldBean) {
         EMProxyHolder cached = findCreatedProxy(targetClz, oldBean);
         if (cached != null) {
             return cached;
         }
-        ClassLoader loader = EMProxyTool.class.getClassLoader();
+        ClassLoader loader = EMProxyUtil.class.getClassLoader();
         Object proxy = (targetClz.isInterface() ? createInterfaceProxy(new Class<?>[]{targetClz}, oldBean, loader)
                 : createClassProxy(oldBean, loader, targetClz));
         EMCache.EM_OBJECT_MAP.get(oldBean).getProxyHolder().put(targetClz, new EMProxyHolder(proxy));

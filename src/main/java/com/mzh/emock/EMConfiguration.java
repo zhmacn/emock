@@ -24,18 +24,19 @@ public class EMConfiguration {
 
     //---------------------------------processor-------------------------------//
 
-
-    //@Bean
-    //public EMApplicationReadyProcessor emAbstractProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
-    //    return new EMApplicationReadyProcessor(context,resourceLoader);
-    //}
-
     @Bean
-    //@ConditionalOnProperty(prefix = EMConfigurationProperties.Constant.CONFIGURATION_PREFIX,
-    //name = EMConfigurationProperties.Constant.PROCESSOR_TYPE,
-    //        havingValue = EMConfigurationProperties.Constant.TYPE_AW)
+    @ConditionalOnProperty(prefix = EMConfigurationProperties.Constant.CONFIGURATION_PREFIX,
+    name = EMConfigurationProperties.Constant.PROCESSOR_TYPE,
+            havingValue = EMConfigurationProperties.Constant.TYPE_AW)
     public EMAutoWiredProcessor emAutowiredProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
         return new EMAutoWiredProcessor(context,resourceLoader);
+    }
+
+
+    @Bean
+    @ConditionalOnMissingBean(value=EMAbstractProcessor.class)
+    public EMApplicationReadyProcessor emApplicationReadyProcessor(@Autowired AbstractApplicationContext context, @Autowired ResourceLoader resourceLoader){
+        return new EMApplicationReadyProcessor(context,resourceLoader);
     }
 
 

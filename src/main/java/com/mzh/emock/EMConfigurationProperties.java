@@ -14,7 +14,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = EMConfigurationProperties.Constant.CONFIGURATION_PREFIX)
 public class EMConfigurationProperties {
     public static class Constant{
-        public static final String CONFIGURATION_PREFIX="com.mzh.emock";
+        public static final String CONFIGURATION_PREFIX="mzh.emock";
         public static final String ENABLED_CONFIGURATION_NAME="enabled";
         public static final String ENABLED_CONFIGURATION_VALUE="true";
         public static final String ENABLED_MANAGER_NAME="enabled-manager";

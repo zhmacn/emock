@@ -37,7 +37,6 @@ public class EMAutoWiredProcessor extends EMAbstractProcessor implements BeanDef
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory factory) throws BeansException {
-        /*
         AutowiredAnnotationBeanPostProcessor processor=(AutowiredAnnotationBeanPostProcessor)factory.getBean(AutowiredAnnotationBeanPostProcessor.class);
         Map<Object, List<EMObjectMatcher.FieldInfo>> holders= EMObjectMatcher.match(factory,processor);
         try {
@@ -50,8 +49,7 @@ public class EMAutoWiredProcessor extends EMAbstractProcessor implements BeanDef
         }catch (Exception ex){
             throw new BeanCreationException("aax");
         }
-        *
-         */
+
     }
 
     private AutowiredAnnotationBeanPostProcessor createProxy(AutowiredAnnotationBeanPostProcessor processor){
